@@ -16,6 +16,51 @@ const degToCompass = (deg) => {
   return dirs[Math.round(deg / 22.5) % 16];
 };
 
+function pressureTier(inHg) {
+  if (inHg >= 30.20) return { zone: 'deep',    color: '#1e3a5f', label: 'Deep (15–30+ ft)', lure: 'Jigs, drop shots, Texas rigs', fishY: 120 };
+  if (inHg >= 29.80) return { zone: 'mid',     color: '#059669', label: 'Mid-column (8–15 ft)', lure: 'Crankbaits, swimbaits, spinnerbaits', fishY: 70 };
+  return               { zone: 'surface', color: '#d97706', label: 'Surface (0–5 ft)', lure: 'Topwater: buzzbaits, poppers, frogs', fishY: 25 };
+}
+
+function renderWaterColumn(inHg) {
+  if (inHg === null) return '';
+  const t = pressureTier(inHg);
+  const fishY = { surface: 12, mid: 40, deep: 72 }[t.zone];
+  return `
+    <div class="card">
+      <h2>Fish Depth — ${inHg} inHg</h2>
+      <div style="display:flex;align-items:center;gap:16px">
+        <svg viewBox="0 0 45 90" width="40" height="80" style="flex-shrink:0">
+          <defs>
+            <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#bfdbfe"/>
+              <stop offset="100%" stop-color="#1e3a5f"/>
+            </linearGradient>
+          </defs>
+          <rect x="2" y="0" width="32" height="90" rx="5" fill="url(#wg)" stroke="var(--border)" stroke-width="1"/>
+          <line x1="2" y1="6" x2="34" y2="6" stroke="#93c5fd" stroke-width="0.5" stroke-dasharray="2,2"/>
+          <g transform="translate(18, ${fishY})">
+            <ellipse rx="8" ry="4" fill="${t.color}" opacity="0.9"/>
+            <polygon points="8,0 13,3 13,-3" fill="${t.color}" opacity="0.9"/>
+            <circle cx="-4" cy="-1" r="1" fill="#fff"/>
+          </g>
+          <text x="43" y="10" font-size="7" fill="var(--muted)" text-anchor="end">5'</text>
+          <text x="43" y="48" font-size="7" fill="var(--muted)" text-anchor="end">15'</text>
+          <text x="43" y="88" font-size="7" fill="var(--muted)" text-anchor="end">30'</text>
+        </svg>
+        <div>
+          <div style="font-weight:700;font-size:1rem;color:${t.color}">${t.label}</div>
+          <div style="color:var(--muted);margin-top:2px;font-size:0.85rem">${t.lure}</div>
+          <div style="margin-top:6px;font-size:0.7rem;color:var(--muted)">
+            <span style="color:#d97706">●</span> &lt;29.80 Surface
+            <span style="color:#059669;margin-left:4px">●</span> 29.80–30.20 Mid
+            <span style="color:#1e3a5f;margin-left:4px">●</span> &gt;30.20 Deep
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
 function waterTier(tempF) {
   if (tempF < 60) return { tier: 'cold-shock', label: 'Cold-Shock Danger', rec: 'Wetsuit required. Limit exposure time.' };
   if (tempF < 65) return { tier: 'very-cold',  label: 'Very Cold',        rec: 'Wetsuit strongly recommended for any water activity.' };
@@ -275,6 +320,9 @@ function render(water, allObs, forecast, hourly, waterHistory, alerts) {
         ${footnote(pres.station)}
       </div>
     </div>`;
+
+  // Fish depth card
+  html += renderWaterColumn(pressure);
 
   // Wind compass
   html += `
