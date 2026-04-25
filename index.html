@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beaver Lake Conditions</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0891b2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f9fa;
+      --text: #1a1a2e;
+      --card-bg: #ffffff;
+      --border: #e0e0e0;
+      --muted: #6b7280;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f0f1a;
+        --text: #e8e8f0;
+        --card-bg: #1a1a2e;
+        --border: #2a2a3e;
+        --muted: #9ca3af;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 16px;
+      line-height: 1.5;
+    }
+
+    header {
+      text-align: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    header h1 { font-size: 1.25rem; font-weight: 600; }
+    header p { font-size: 0.8rem; color: var(--muted); }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .card h2 {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* Water temp tiers */
+    .tier-cold-shock { background: #1e3a5f; color: #fff; }
+    .tier-very-cold  { background: #2563eb; color: #fff; }
+    .tier-chilly     { background: #0891b2; color: #fff; }
+    .tier-comfortable { background: #059669; color: #fff; }
+    .tier-warm       { background: #d97706; color: #fff; }
+
+    .hero-temp {
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .hero-status { font-size: 1rem; font-weight: 600; margin-top: 4px; }
+    .hero-rec { font-size: 0.85rem; margin-top: 4px; opacity: 0.9; }
+
+    .grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .grid-2x2 .card { text-align: center; }
+    .grid-2x2 .value { font-size: 1.5rem; font-weight: 700; }
+    .grid-2x2 .label { font-size: 0.75rem; color: var(--muted); }
+
+    .forecast-day {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    .forecast-day:last-child { border-bottom: none; }
+    .forecast-name { font-weight: 600; min-width: 100px; }
+    .forecast-temp { font-weight: 700; min-width: 50px; text-align: right; }
+    .forecast-desc { color: var(--muted); font-size: 0.8rem; flex: 1; text-align: right; margin-left: 8px; }
+
+    .compass-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .compass-note {
+      font-size: 0.85rem;
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .chart-container { width: 100%; height: 200px; }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    button:active { opacity: 0.7; }
+
+    .refresh-btn {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--muted);
+      padding: 16px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    footer a { color: var(--muted); }
+
+    .loading { text-align: center; padding: 40px 0; color: var(--muted); }
+    .error { color: #ef4444; font-size: 0.85rem; padding: 8px; }
+
+    .alert-banner {
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .alert-banner .alert-event { font-weight: 700; font-size: 0.95rem; }
+    .alert-banner .alert-headline { margin-top: 4px; }
+    .alert-banner .alert-detail { margin-top: 8px; font-size: 0.8rem; display: none; }
+    .alert-banner.open .alert-detail { display: block; }
+    .alert-extreme, .alert-severe { background: #991b1b; color: #fff; }
+    .alert-moderate { background: #b45309; color: #fff; }
+    .alert-minor { background: #1d4ed8; color: #fff; }
+    .alert-unknown { background: #6b7280; color: #fff; }
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Beaver Lake, AR</h1>
+    <p id="last-updated">Loading...</p>
+  </header>
+
+  <div id="app">
+    <div class="loading">Fetching conditions...</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+</body>
+</html>
